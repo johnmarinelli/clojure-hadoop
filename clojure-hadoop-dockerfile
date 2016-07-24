@@ -1,0 +1,8 @@
+from sequenceid/hadoop:2.7.1
+curl https://raw.githubusercontent.com/technomancy/leiningen/stable/bin/lein > lein
+chmod 755 lein
+mv lein /usr/local/bin/
+git clone https://github.com/johnmarinelli/clojure-hadoop
+cd clojure-hadoop
+lein deps
+lein test
