@@ -6,3 +6,5 @@ tmp
 /pom.xml
 /.lein-failures
 /pom.xml.asc
+examples.jar
+/out1
