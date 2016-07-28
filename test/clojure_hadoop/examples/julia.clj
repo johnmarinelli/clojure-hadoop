@@ -95,4 +95,4 @@
     (reset! zoom zoom-level)
     (reset! depth depth-level)
     (doseq [[[x y] itrs] grid]
-      (.write context (proxy [ArrayWritable] [IntWritable]) (LongWritable. i)))))
+      (.write context (proxy [ArrayWritable] [IntWritable (into-array IntWritable [(IntWritable. x) (IntWritable. y)])]) (LongWritable. itrs)))))
