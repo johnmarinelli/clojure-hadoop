@@ -28,4 +28,5 @@
         clojure-hadoop.flow
         ;; TODO: Remove them? Only needed for the tests.
         clojure-hadoop.examples.wordcount1
-        clojure-hadoop.examples.wordcount2])
+        clojure-hadoop.examples.wordcount2]
+  :uberjar-name "examples.jar")
