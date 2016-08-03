@@ -26,9 +26,5 @@
         clojure-hadoop.load
         clojure-hadoop.wrap
         clojure-hadoop.flow
-        julia.int-array-writable
-        ;; TODO: Remove them? Only needed for the tests.
-        clojure-hadoop.examples.wordcount1
-        clojure-hadoop.examples.wordcount2
         clojure-hadoop.examples.julia]
   :uberjar-name "examples.jar")

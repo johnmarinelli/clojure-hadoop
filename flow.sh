@@ -6,4 +6,5 @@ git commit -m $1
 git push
 
 # build without cache
-docker build --no-cache -t johnmarinelli/clojure-hadoop .
+docker build -t johnmarinelli/clojure-hadoop .
+docker run -it johnmarinelli/clojure-hadoop bash

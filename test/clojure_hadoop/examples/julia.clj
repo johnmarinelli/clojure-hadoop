@@ -49,7 +49,7 @@
         idx (count zitrs)]
     (when (> idx @depth)
       (reset! depth idx))
-    [j i idx]))
+    idx))
 
 (defn julia-subrect-opt [[^long start-x ^long start-y ^long end-x ^long end-y] [^double rc ^double ic] total-width total-height max-itrs ]
   (let [radius (calculate-r-opt rc ic)
@@ -91,10 +91,9 @@
          y-offset] (map read-string (str/split (str value) #" "))
          end-x (+ start-x width)
          end-y (+ start-y height)
-         grid (julia-subrect-opt [start-x start-y end-x end-y] [cr ci] width height depth)]  
-    (reset! zoom zoom-level)
+         grid (julia-subrect-opt [start-x start-y end-x end-y] [cr ci] width height depth-level)]    (reset! zoom zoom-level)
     (reset! depth depth-level)
-    (doseq [[[x y] itrs] grid]
+    (doseq [[[x y itrs]] grid]
       (.write context (proxy [ArrayWritable] [IntWritable (into-array IntWritable [(IntWritable. x) (IntWritable. y)])]) (LongWritable. itrs)))))
 
 (defn reducer-reduce
