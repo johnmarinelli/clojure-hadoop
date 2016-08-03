@@ -96,3 +96,27 @@
     (reset! depth depth-level)
     (doseq [[[x y] itrs] grid]
       (.write context (proxy [ArrayWritable] [IntWritable (into-array IntWritable [(IntWritable. x) (IntWritable. y)])]) (LongWritable. itrs)))))
+
+(defn reducer-reduce
+  [this key values ^ReduceContext context]
+  (println key))
+
+(defn tool-run
+  [^Tool this args]
+  (doto (Job.)_
+        (.setJarByClass (.getClass this))
+        (.setJobName "julia")
+        (.setOutputKeyClass Text)
+        (.setOutputValueClass LongWritable)
+        (.setMapperClass (Class/forName "clojure_hadoop.examples.julia_mapper"))
+        (.setReducerClass (Class/forName "clojure_hadoop.examples.julia_reducer"))
+        (.setInputFormatClass TextInputFormat)
+        (.setOutputFormatClass TextOutputFormat)
+        (FileInputFormat/setInputPaths (first args))
+        (FileOutputFormat/setOutputPath (Path. (second args)))
+        (.waitForCompletion true))
+  0)
+
+(deftest test-julia
+  (.delete (FileSystem/get (Configuration.)) (Path. "tmp/out1") true)
+  (is (tool-run (clojure_hadoop.job.) ["test-resources/julia.txt" "tmp/out1"])))
