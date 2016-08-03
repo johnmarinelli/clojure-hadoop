@@ -88,7 +88,7 @@
          depth-level
          zoom-level
          x-offset
-         y-offset] (map Integer/parseInt (str/split (str value) #" "))
+         y-offset] (map read-string (str/split (str value) #" "))
          end-x (+ start-x width)
          end-y (+ start-y height)
          grid (julia-subrect-opt [start-x start-y end-x end-y] [cr ci] width height depth)]  
