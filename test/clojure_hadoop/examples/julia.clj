@@ -103,7 +103,7 @@
 
 (defn tool-run
   [^Tool this args]
-  (doto (Job.)_
+  (doto (Job.)
         (.setJarByClass (.getClass this))
         (.setJobName "julia")
         (.setOutputKeyClass Text)
