@@ -3,7 +3,12 @@
             [clojure-hadoop.imports :as imp]
             [clojure.string :as str])
   (:import (java.util StringTokenizer)
-           (org.apache.hadoop.util Tool))
+           (org.apache.hadoop.util Tool)
+           (java.awt Color)
+           (java.awt.image BufferedImage)
+           (java.io ByteArrayOutputStream ByteArrayInputStream)
+           (javax.imageio ImageIO)
+           (java.io File))
   (:use clojure.test))
 
 (def zoom (atom 1))
@@ -34,14 +39,14 @@
   (/ (inc (Math/sqrt (inc (* 4.0 (cmod-opt r0 i0))))) 2.0))
 
 (defn sq-poly-iteration-opt [^double r0 ^double i0 [^double rc ^double ic ^long max-itrs ^double radius]]
-  (loop [i 0 zs [[r0 i0]]]
+  (loop [itr 0 zs [[r0 i0]]]
     (let [[r i] (last zs)
           [rr ii] (c*-opt r i r i)
           [rn in] (c+-opt rr ii rc ic)
           dis (cmod-opt rn in)]
-      (if (or (> dis radius) (>= i max-itrs))
+      (if (or (> dis radius) (>= itr max-itrs))
         zs
-        (recur (inc i) (conj zs [rn in]))))))
+        (recur (inc itr) (conj zs [rn in]))))))
 
 (defn for-each-pixel-opt [[^double r0 ^double i0] [max-itrs radius r-min] [^double x-step ^double y-step] [^double j ^double i]]
   (let [[x y] (normalize-coords j i r-min x-step y-step)
@@ -72,6 +77,23 @@
                                    (conj row 
                                          [x y (for-each-pixel-opt [rc ic] [max-itrs radius r-min] [x-step y-step] [x y])]))))))))))
 
+(defn complex-heat-map [^Double value ^Double min ^Double max [^double cr ^double ci] ^Double radius]
+  (let [val (/ (- value min) (- max min))
+        zmod (cmod-opt cr ci)
+        r 255.0
+        g (Math/abs (mod (* 255 val) 256))
+        b (Math/abs (mod (* 255 (- 1.0 val)) 256))
+        a (Math/abs (mod (* 255 (if  (> (/ zmod radius) 1.0) 1.0 (/ zmod radius))) 256))]
+    [r g b a]))
+
+(defn col [[^long r ^double g ^double b ^double a]]
+  (println r g b a)
+  (let [[g-int b-int a-int] (map #(Math/round %) [g b a])] 
+    (bit-or (bit-shift-left a-int 24)
+            (bit-shift-left r 16)
+            (bit-shift-left g-int 8)
+            b-int)))
+
 ; key: [x y]
 ; val: # itrs
 (defn mapper-map
@@ -91,14 +113,39 @@
          y-offset] (map read-string (str/split (str value) #" "))
          end-x (+ start-x width)
          end-y (+ start-y height)
-         grid (julia-subrect-opt [start-x start-y end-x end-y] [cr ci] width height depth-level)]    (reset! zoom zoom-level)
+         radius (calculate-r-opt cr ci)
+         grid (julia-subrect-opt [start-x start-y end-x end-y] [cr ci] width height depth-level)
+         img (BufferedImage. width height BufferedImage/TYPE_INT_RGB)]
+    (reset! zoom zoom-level)
     (reset! depth depth-level)
-    (doseq [[[x y itrs]] grid]
-      (.write context (proxy [ArrayWritable] [IntWritable (into-array IntWritable [(IntWritable. x) (IntWritable. y)])]) (LongWritable. itrs)))))
+    (doseq [row grid]
+      (doseq [[x y itrs] row]
+        (let [[r g b a] (map #(int (Math/floor %)) (complex-heat-map itrs 0.0 @depth [cr ci] radius))
+              color (.getRGB (Color. r g b a))] 
+          (.setRGB img x y color))))
+; for some reason baos is only 29 bytes
+    (let [baos (ByteArrayOutputStream.)] 
+      (ImageIO/write img, "png", baos)
+      (.flush baos)
+      (let [image-in-bytes (.toByteArray baos)
+            a (println image-in-bytes)]
+      (.write context (Text. (str start-x ", " start-y)) (BytesWritable. image-in-bytes))))))
+
+
+(def f (File. "out.png"))
 
 (defn reducer-reduce
   [this key values ^ReduceContext context]
-  (println key))
+  (let [[x y] (map read-string (str/split (.toString key) #", "))
+        bytes (.get (first values))
+        a (println bytes)
+        bais (ByteArrayInputStream. bytes)
+
+;        bais (ByteArrayInputStream. ba)
+ ;       img (BufferedImage. (ImageIO/read bais))
+  ;      b (ImageIO/write img, "png", f)
+        ]
+    (.write context key (doall bytes))))
 
 (defn tool-run
   [^Tool this args]
@@ -106,7 +153,7 @@
         (.setJarByClass (.getClass this))
         (.setJobName "julia")
         (.setOutputKeyClass Text)
-        (.setOutputValueClass LongWritable)
+        (.setOutputValueClass BytesWritable)
         (.setMapperClass (Class/forName "clojure_hadoop.examples.julia_mapper"))
         (.setReducerClass (Class/forName "clojure_hadoop.examples.julia_reducer"))
         (.setInputFormatClass TextInputFormat)
@@ -117,5 +164,5 @@
   0)
 
 (deftest test-julia
-  (.delete (FileSystem/get (Configuration.)) (Path. "tmp/out1") true)
-  (is (tool-run (clojure_hadoop.job.) ["test-resources/julia.txt" "tmp/out1"])))
+  (.delete (FileSystem/get (Configuration.)) (Path. "tmp/outj") true)
+  (is (tool-run (clojure_hadoop.job.) ["test-resources/julia.txt" "tmp/outj"])))
