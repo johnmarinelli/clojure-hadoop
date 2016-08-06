@@ -86,14 +86,6 @@
         a (Math/abs (mod (* 255 (if  (> (/ zmod radius) 1.0) 1.0 (/ zmod radius))) 256))]
     [r g b a]))
 
-(defn col [[^long r ^double g ^double b ^double a]]
-  (println r g b a)
-  (let [[g-int b-int a-int] (map #(Math/round %) [g b a])] 
-    (bit-or (bit-shift-left a-int 24)
-            (bit-shift-left r 16)
-            (bit-shift-left g-int 8)
-            b-int)))
-
 ; key: [x y]
 ; val: # itrs
 (defn mapper-map
@@ -114,7 +106,7 @@
          end-x (+ start-x width)
          end-y (+ start-y height)
          radius (calculate-r-opt cr ci)
-         grid (julia-subrect-opt [start-x start-y end-x end-y] [cr ci] width height depth-level)
+         grid (julia-subrect-opt [start-x start-y end-x end-y] [cr ci] total-width total-height depth-level)
          img (BufferedImage. width height BufferedImage/TYPE_INT_RGB)]
     (reset! zoom zoom-level)
     (reset! depth depth-level)
@@ -123,13 +115,12 @@
         (let [[r g b a] (map #(int (Math/floor %)) (complex-heat-map itrs 0.0 @depth [cr ci] radius))
               color (.getRGB (Color. r g b a))] 
           (.setRGB img x y color))))
-; for some reason baos is only 29 bytes
     (let [baos (ByteArrayOutputStream.)] 
       (ImageIO/write img, "png", baos)
-      (.flush baos)
       (let [image-in-bytes (.toByteArray baos)
-            a (println image-in-bytes)]
-      (.write context (Text. (str start-x ", " start-y)) (BytesWritable. image-in-bytes))))))
+            key (Text. (str start-x ", " start-y))
+            value (BytesWritable. image-in-bytes)]
+        (.write context key value)))))
 
 
 (def f (File. "out.png"))
@@ -137,15 +128,11 @@
 (defn reducer-reduce
   [this key values ^ReduceContext context]
   (let [[x y] (map read-string (str/split (.toString key) #", "))
-        bytes (.get (first values))
-        a (println bytes)
-        bais (ByteArrayInputStream. bytes)
-
-;        bais (ByteArrayInputStream. ba)
- ;       img (BufferedImage. (ImageIO/read bais))
-  ;      b (ImageIO/write img, "png", f)
-        ]
-    (.write context key (doall bytes))))
+        byte-array (first values)
+        input-bytes (.getBytes byte-array)
+        img (ImageIO/read (ByteArrayInputStream. input-bytes))]
+    (ImageIO/write img "png" f)
+    (.write context key byte-array)))
 
 (defn tool-run
   [^Tool this args]
