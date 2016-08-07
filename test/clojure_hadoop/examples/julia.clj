@@ -134,6 +134,8 @@
     (ImageIO/write img "png" f)
     (.write context key byte-array)))
 
+(import '(org.apache.hadoop.input MultipleInputs))
+
 (defn tool-run
   [^Tool this args]
   (doto (Job.)
@@ -147,7 +149,8 @@
         (.setOutputFormatClass TextOutputFormat)
         (FileInputFormat/setInputPaths (first args))
         (FileOutputFormat/setOutputPath (Path. (second args)))
-        (.waitForCompletion true))
+        (.waitForCompletion true)
+        (MultipleInputs/addInputPath "test-resources/julia2.txt" TextInputFormat))
   0)
 
 (deftest test-julia
