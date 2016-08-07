@@ -86,6 +86,8 @@
         a (Math/abs (mod (* 255 (if  (> (/ zmod radius) 1.0) 1.0 (/ zmod radius))) 256))]
     [r g b a]))
 
+(def ctr (atom 0))
+
 ; key: [x y]
 ; val: # itrs
 (defn mapper-map
@@ -107,7 +109,7 @@
          end-y (+ start-y height)
          radius (calculate-r-opt cr ci)
          grid (julia-subrect-opt [start-x start-y end-x end-y] [cr ci] total-width total-height depth-level)
-         img (BufferedImage. width height BufferedImage/TYPE_INT_RGB)]
+         img (BufferedImage. total-width total-height BufferedImage/TYPE_INT_RGB)]
     (reset! zoom zoom-level)
     (reset! depth depth-level)
     (doseq [row grid]
@@ -122,15 +124,14 @@
             value (BytesWritable. image-in-bytes)]
         (.write context key value)))))
 
-
-(def f (File. "out.png"))
-
 (defn reducer-reduce
   [this key values ^ReduceContext context]
   (let [[x y] (map read-string (str/split (.toString key) #", "))
         byte-array (first values)
         input-bytes (.getBytes byte-array)
-        img (ImageIO/read (ByteArrayInputStream. input-bytes))]
+        img (ImageIO/read (ByteArrayInputStream. input-bytes))
+        f (File. (str @ctr ".png"))
+        zzz (swap! ctr inc)]
     (ImageIO/write img "png" f)
     (.write context key byte-array)))
 
@@ -147,6 +148,8 @@
         (.setOutputFormatClass TextOutputFormat)
         (FileInputFormat/setInputPaths (first args))
         (FileOutputFormat/setOutputPath (Path. (second args)))
+        (MultipleInputs/addInputPath (Path. "test-resources/julia.txt") TextInputFormat)
+        (MultipleInputs/addInputPath (Path. "test-resources/julia2.txt") TextInputFormat)
         (.waitForCompletion true))
   0)
 
