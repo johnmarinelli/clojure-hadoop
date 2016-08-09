@@ -140,25 +140,33 @@
     (ImageIO/write @whole-image "png" (File. (str "complete-phase-" @ctr ".png")))
     (.write context key byte-array)))
 
+(defn add-paths [job input-paths]
+  (doseq 
+   [path input-paths]
+   (MultipleInputs/addInputPath job (Path. path) TextInputFormat)))
+
 (defn tool-run
   [^Tool this args]
-  (doto (Job.)
-        (.setJarByClass (.getClass this))
-        (.setJobName "julia")
-        (.setOutputKeyClass Text)
-        (.setOutputValueClass BytesWritable)
-        (.setMapperClass (Class/forName "clojure_hadoop.examples.julia_mapper"))
-        (.setReducerClass (Class/forName "clojure_hadoop.examples.julia_reducer"))
-        (.setInputFormatClass TextInputFormat)
-        (.setOutputFormatClass TextOutputFormat)
-        (FileInputFormat/setInputPaths (first args))
-        (FileOutputFormat/setOutputPath (Path. (second args)))
-        (MultipleInputs/addInputPath (Path. "test-resources/julia.txt") TextInputFormat)
-        (MultipleInputs/addInputPath (Path. "test-resources/julia2.txt") TextInputFormat)
-        (MultipleInputs/addInputPath (Path. "test-resources/julia3.txt") TextInputFormat)
-        (MultipleInputs/addInputPath (Path. "test-resources/julia4.txt") TextInputFormat)
-        (.waitForCompletion true))
-  0)
+  (let [input-paths (rest (reverse args))
+        output-path (last args)] 
+    (doto (Job.)
+      (.setJarByClass (.getClass this))
+      (.setJobName "julia")
+      (.setOutputKeyClass Text)
+      (.setOutputValueClass BytesWritable)
+      (.setMapperClass (Class/forName "clojure_hadoop.examples.julia_mapper"))
+      (.setReducerClass (Class/forName "clojure_hadoop.examples.julia_reducer"))
+      (.setInputFormatClass TextInputFormat)
+      (.setOutputFormatClass TextOutputFormat)
+      (add-paths input-paths)
+;      (MultipleInputs/addInputPath (Path. (first input-paths)) TextInputFormat) 
+ ;     (MultipleInputs/addInputPath (Path. (second input-paths)) TextInputFormat)
+  ;    (MultipleInputs/addInputPath (Path. (nth input-paths 2)) TextInputFormat)
+   ;   (MultipleInputs/addInputPath (Path. (nth input-paths 3)) TextInputFormat)
+      (FileOutputFormat/setOutputPath (Path. output-path))
+      (.waitForCompletion true))
+)
+0)
 
 (deftest test-julia
   (.delete (FileSystem/get (Configuration.)) (Path. "tmp/outj") true)

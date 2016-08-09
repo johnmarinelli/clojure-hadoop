@@ -8,3 +8,9 @@ tmp
 /pom.xml.asc
 examples.jar
 /out1
+*.png
+!complete-phase-4.png
+outj/
+.lein-repl-history
+.nrepl-port
+
