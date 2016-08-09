@@ -13,6 +13,7 @@
 
 (def zoom (atom 1))
 (def depth (atom 300))
+(def whole-image (atom nil))
 
 (imp/import-conf)
 (imp/import-fs)
@@ -112,10 +113,13 @@
          img (BufferedImage. total-width total-height BufferedImage/TYPE_INT_RGB)]
     (reset! zoom zoom-level)
     (reset! depth depth-level)
+    (if (nil? @whole-image)
+      (reset! whole-image (BufferedImage. total-width total-height BufferedImage/TYPE_INT_RGB)))
     (doseq [row grid]
       (doseq [[x y itrs] row]
         (let [[r g b a] (map #(int (Math/floor %)) (complex-heat-map itrs 0.0 @depth [cr ci] radius))
               color (.getRGB (Color. r g b a))] 
+          (.setRGB @whole-image x y color)
           (.setRGB img x y color))))
     (let [baos (ByteArrayOutputStream.)] 
       (ImageIO/write img, "png", baos)
@@ -133,9 +137,8 @@
         f (File. (str @ctr ".png"))
         zzz (swap! ctr inc)]
     (ImageIO/write img "png" f)
+    (ImageIO/write @whole-image "png" (File. (str "complete-phase-" @ctr ".png")))
     (.write context key byte-array)))
-
-(import '(org.apache.hadoop.input MultipleInputs))
 
 (defn tool-run
   [^Tool this args]
@@ -152,6 +155,8 @@
         (FileOutputFormat/setOutputPath (Path. (second args)))
         (MultipleInputs/addInputPath (Path. "test-resources/julia.txt") TextInputFormat)
         (MultipleInputs/addInputPath (Path. "test-resources/julia2.txt") TextInputFormat)
+        (MultipleInputs/addInputPath (Path. "test-resources/julia3.txt") TextInputFormat)
+        (MultipleInputs/addInputPath (Path. "test-resources/julia4.txt") TextInputFormat)
         (.waitForCompletion true))
   0)
 
