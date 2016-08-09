@@ -1,3 +1,5 @@
+![julia](https://github.com/johnmarinelli/clojure-hadoop/complete-phase-4)
+
 clojure-hadoop
 
 A library to assist in writing Hadoop MapReduce jobs in Clojure.
