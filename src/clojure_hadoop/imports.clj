@@ -88,7 +88,8 @@
   (import
    '(org.apache.hadoop.mapreduce.lib.input
      FileInputFormat FileSplit LineRecordReader SequenceFileInputFormat
-     SequenceFileRecordReader TextInputFormat InvalidInputException)))
+     SequenceFileRecordReader TextInputFormat InvalidInputException
+     MultipleInputs)))
 
 (defn import-mapreduce-lib-map
   "Imports all classes/interfaces/exceptions from the package

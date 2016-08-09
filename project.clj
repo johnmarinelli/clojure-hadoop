@@ -5,8 +5,8 @@
             :url "http://opensource.org/licenses/eclipse-1.0.php"
             :distribution "repo"
             :comments "Same license as Clojure"}
-  :dependencies [[org.clojure/clojure "1.5.0"]
-                 [org.apache.hadoop/hadoop-core "1.1.2"]
+  :dependencies [[org.clojure/clojure "1.8.0"]
+                 [org.apache.hadoop/hadoop-core "1.2.1"]
                  ;; commons-io was omitted in 1.0.3/1.0.4
                  ;; needs to be explicitly included
                  ;; until this is resolved.                 
