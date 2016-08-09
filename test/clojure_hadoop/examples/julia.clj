@@ -134,10 +134,10 @@
         byte-array (first values)
         input-bytes (.getBytes byte-array)
         img (ImageIO/read (ByteArrayInputStream. input-bytes))
-        f (File. (str @ctr ".png"))
-        zzz (swap! ctr inc)]
-    (ImageIO/write img "png" f)
-    (ImageIO/write @whole-image "png" (File. (str "complete-phase-" @ctr ".png")))
+        f (File. (str @ctr ".png"))]
+;    (swap! ctr inc)
+;    (ImageIO/write img "png" f)
+    (ImageIO/write @whole-image "png" (File. "complete.png"))
     (.write context key byte-array)))
 
 (defn add-paths [job input-paths]
