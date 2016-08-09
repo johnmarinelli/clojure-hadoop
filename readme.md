@@ -1,4 +1,4 @@
-<img src="https://raw.githubusercontent.com/johnmarinelli/clojure-hadoop/master/complete-phase-4.png" />
+![julia](https://raw.githubusercontent.com/johnmarinelli/clojure-hadoop/master/complete-phase-4.png)
 
 clojure-hadoop
 
